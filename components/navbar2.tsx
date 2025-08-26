@@ -1,9 +1,13 @@
 "use client";
 import React, { useState } from "react";
-
 import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import Link from "next/link";
+
+import { useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { signOut } from "next-auth/react";
 
 const navigation = [
     { name: "Product", href: "#" },
@@ -14,6 +18,9 @@ const navigation = [
 
 const Navbar2 = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const { data: session, status } = useSession();
+
     return (
         <header className="absolute inset-x-0 top-0 z-50">
             <nav
@@ -54,12 +61,43 @@ const Navbar2 = () => {
                     ))}
                 </div>
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                    <a
-                        href="#"
-                        className="text-sm/6 font-semibold text-foreground"
-                    >
-                        Log in <span aria-hidden="true">&rarr;</span>
-                    </a>
+                    {status === "loading" ? (
+                        <div />
+                    ) : (
+                        <div>
+                            {session?.user ? (
+                                <div className="flex items-center">
+                                    <Avatar
+                                        onClick={() =>
+                                            signOut({ redirectTo: "/sign-in" })
+                                        }
+                                    >
+                                        <AvatarImage
+                                            src={session.user.image || ""}
+                                            alt={session.user.name || "User"}
+                                        />
+                                        <AvatarFallback>
+                                            {session.user.name
+                                                ? session.user.name
+                                                      .split(" ")
+                                                      .map((n) => n[0])
+                                                      .join("")
+                                                      .toUpperCase()
+                                                : "U"}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </div>
+                            ) : (
+                                <Link
+                                    href="/sign-in"
+                                    className="text-sm/6 font-semibold text-foreground"
+                                >
+                                    Log in{" "}
+                                    <span aria-hidden="true">&rarr;</span>
+                                </Link>
+                            )}
+                        </div>
+                    )}
                 </div>
             </nav>
             <Dialog
@@ -103,12 +141,12 @@ const Navbar2 = () => {
                                 ))}
                             </div>
                             <div className="py-6">
-                                <a
-                                    href="#"
+                                <Link
+                                    href="/sign-in"
                                     className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-foreground hover:bg-accent"
                                 >
                                     Log in
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>
