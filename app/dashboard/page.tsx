@@ -1,27 +1,156 @@
 "use client";
 
+import { DocIcon, HeroBgPattern, PdfIcon } from "@/components/svg";
+import { Button } from "@/components/ui/button";
+import {
+    LucideFileDown,
+    LucideFileText,
+    LucideLoaderCircle,
+    LucidePlus,
+    LucideTrash2,
+    LucideUpload,
+} from "lucide-react";
 import { useState } from "react";
+
+interface UploadedFile {
+    id: number;
+    name: string;
+    size: string;
+    type: string;
+    uploadDate: string;
+    status: "Uploading" | "Processing" | "Analyzed" | "Error";
+    blobName?: string;
+}
 
 export default function UploadPage() {
     const [dragActive, setDragActive] = useState(false);
-    const [uploadedFiles, setUploadedFiles] = useState([
-        {
-            id: 1,
-            name: "Employment Contract.pdf",
-            size: "2.4 MB",
-            type: "PDF",
-            uploadDate: "Aug 26, 2025",
-            status: "Analyzed",
-        },
-        {
-            id: 2,
-            name: "Service Agreement.docx",
-            size: "1.8 MB",
-            type: "DOCX",
-            uploadDate: "Aug 25, 2025",
-            status: "Processing",
-        },
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([
+        // {
+        //     id: 1,
+        //     name: "Employment Contract.pdf",
+        //     size: "2.4 MB",
+        //     type: "PDF",
+        //     uploadDate: "Aug 26, 2025",
+        //     status: "Analyzed",
+        // },
+        // {
+        //     id: 2,
+        //     name: "Service Agreement.docx",
+        //     size: "1.8 MB",
+        //     type: "DOCX",
+        //     uploadDate: "Aug 25, 2025",
+        //     status: "Processing",
+        // },
     ]);
+
+    // File validation function
+    const validateFile = (file: File): string | null => {
+        const allowedTypes = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
+        ];
+
+        const maxSize = 10 * 1024 * 1024;
+
+        if (!allowedTypes.includes(file.type)) {
+            return "Only PDF and DOCX files are allowed";
+        }
+
+        if (file.size > maxSize) {
+            return "File size must be less than 10MB";
+        }
+
+        return null;
+    };
+
+    // Format file size
+    const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    };
+
+    // Upload file function
+    const uploadFile = async (file: File): Promise<void> => {
+        const validationError = validateFile(file);
+        if (validationError) {
+            alert(validationError);
+            return;
+        }
+
+        const fileId = Date.now() + Math.random();
+        const newFile: UploadedFile = {
+            id: fileId,
+            name: file.name,
+            size: formatFileSize(file.size),
+            type: file.type.includes("pdf") ? "PDF" : "DOCX",
+            uploadDate: new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+            }),
+            status: "Uploading",
+        };
+
+        // Add file to list immediately
+        setUploadedFiles((prev) => [newFile, ...prev]);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Upload failed");
+            }
+
+            // Update file status to processing
+            setUploadedFiles((prev) =>
+                prev.map((f) =>
+                    f.id === fileId
+                        ? {
+                              ...f,
+                              status: "Processing" as const,
+                              blobName: result.blobName,
+                          }
+                        : f
+                )
+            );
+
+            // Simulate processing completion after 2 seconds
+            setTimeout(() => {
+                setUploadedFiles((prev) =>
+                    prev.map((f) =>
+                        f.id === fileId
+                            ? { ...f, status: "Analyzed" as const }
+                            : f
+                    )
+                );
+            }, 2000);
+        } catch (error) {
+            console.error("Upload error:", error);
+            // Update file status to error
+            setUploadedFiles((prev) =>
+                prev.map((f) =>
+                    f.id === fileId ? { ...f, status: "Error" as const } : f
+                )
+            );
+        }
+    };
+
+    // Delete file function
+    const deleteFile = (fileId: number) => {
+        setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+    };
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -37,50 +166,26 @@ export default function UploadPage() {
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
-        // Handle file drop logic here
+
+        const files = Array.from(e.dataTransfer.files);
+        files.forEach((file) => uploadFile(file));
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Handle file selection logic here
+        const files = Array.from(e.target.files || []);
+        files.forEach((file) => uploadFile(file));
+
+        // Reset input value so same file can be uploaded again
+        e.target.value = "";
     };
 
     return (
         <div className="bg-background min-h-screen">
             <main>
                 <div className="relative isolate">
-                    <svg
-                        aria-hidden="true"
-                        className="absolute inset-x-0 top-0 -z-10 h-[64rem] w-full stroke-border [mask-image:radial-gradient(32rem_32rem_at_center,white,transparent)] blur-[4px]"
-                    >
-                        <defs>
-                            <pattern
-                                x="50%"
-                                y={-1}
-                                id="upload-pattern"
-                                width={200}
-                                height={200}
-                                patternUnits="userSpaceOnUse"
-                            >
-                                <path d="M.5 200V.5H200" fill="none" />
-                            </pattern>
-                        </defs>
-                        <svg
-                            x="50%"
-                            y={-1}
-                            className="overflow-visible fill-muted/60"
-                        >
-                            <path
-                                d="M-200 0h201v201h-201Z M600 0h201v201h-201Z M-400 600h201v201h-201Z M200 800h201v201h-201Z"
-                                strokeWidth={0}
-                            />
-                        </svg>
-                        <rect
-                            fill="url(#upload-pattern)"
-                            width="100%"
-                            height="100%"
-                            strokeWidth={0}
-                        />
-                    </svg>
+                    <div className=" blur-[3px]">
+                        <HeroBgPattern />
+                    </div>
 
                     {/* Gradient blur effect */}
                     <div
@@ -126,20 +231,10 @@ export default function UploadPage() {
                                     <div className="mx-auto max-w-md">
                                         {/* Upload Icon */}
                                         <div className="mx-auto w-16 h-16 mb-6 flex items-center justify-center rounded-full bg-primary/10">
-                                            <svg
-                                                className="w-8 h-8 text-primary"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                                                />
-                                            </svg>
+                                            <LucideUpload
+                                                className="text-primary"
+                                                size={26}
+                                            />
                                         </div>
 
                                         <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -148,33 +243,20 @@ export default function UploadPage() {
                                                 : "Choose files or drag here"}
                                         </h3>
                                         <p className="text-muted-foreground mb-6">
-                                            Supports PDF, DOC, DOCX files up to
+                                            Supports PDF and DOCX files up to
                                             10MB
                                         </p>
 
-                                        {/* File Input */}
                                         <label className="inline-block">
                                             <input
                                                 type="file"
                                                 multiple
-                                                accept=".pdf,.doc,.docx"
+                                                accept=".pdf,.docx"
                                                 onChange={handleFileSelect}
                                                 className="hidden"
                                             />
-                                            <span className="cursor-pointer inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg shadow-sm transition-colors duration-200">
-                                                <svg
-                                                    className="w-5 h-5 mr-2"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                                    />
-                                                </svg>
+                                            <span className="cursor-pointer inline-flex items-center px-6 py-3  hover:bg-muted/20 hover:text-primary text-muted-foreground font-medium rounded-lg shadow-sm transition-colors duration-200 gap-1">
+                                                <LucidePlus size={18} />
                                                 Browse Files
                                             </span>
                                         </label>
@@ -209,22 +291,9 @@ export default function UploadPage() {
                                                         <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                                                             {file.type ===
                                                             "PDF" ? (
-                                                                <svg
-                                                                    className="w-6 h-6 text-red-500"
-                                                                    fill="currentColor"
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm3.487.012c-.2 0-.33.018-.407.036v2.61c.077.018.201.018.313.018.817.006 1.349-.444 1.349-1.396.006-.83-.479-1.268-1.255-1.268z" />
-                                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9.498 16.19c-.309.29-.765.42-1.296.42a2.23 2.23 0 0 1-.308-.018v1.426H7v-3.936A7.558 7.558 0 0 1 8.219 14c.557 0 .953.106 1.22.319.254.202.426.533.426.923-.001.392-.131.723-.367.948zm3.807 1.355c-.42.349-1.059.515-1.84.515-.468 0-.799-.03-1.024-.06v-3.917A7.947 7.947 0 0 1 11.66 14c.757 0 1.249.136 1.633.426.415.308.675.799.675 1.504 0 .763-.279 1.29-.663 1.615zM17 14.77h-1.532v.911H16.9v.734h-1.432v1.604h-.906V14.03H17v.74zM14 9h-1V4l5 5h-4z" />
-                                                                </svg>
+                                                                <PdfIcon />
                                                             ) : (
-                                                                <svg
-                                                                    className="w-6 h-6 text-blue-500"
-                                                                    fill="currentColor"
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM16 18H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
-                                                                </svg>
+                                                                <DocIcon />
                                                             )}
                                                         </div>
 
@@ -258,47 +327,44 @@ export default function UploadPage() {
                                                                 file.status ===
                                                                 "Analyzed"
                                                                     ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                                                                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+                                                                    : file.status ===
+                                                                      "Processing"
+                                                                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+                                                                    : file.status ===
+                                                                      "Uploading"
+                                                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                                                                    : "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
                                                             }`}
                                                         >
-                                                            {file.status}
+                                                            {file.status ===
+                                                                "Uploading" && (
+                                                                <div className="flex items-center space-x-1">
+                                                                    <LucideLoaderCircle className="animate-spin h-3 w-3" />
+                                                                    <span>
+                                                                        Uploading
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {file.status !==
+                                                                "Uploading" &&
+                                                                file.status}
                                                         </span>
 
                                                         {/* Action Buttons */}
                                                         <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                                                                <svg
-                                                                    className="w-4 h-4 text-muted-foreground hover:text-foreground"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                        strokeWidth={
-                                                                            2
-                                                                        }
-                                                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                                                    />
-                                                                </svg>
+                                                                <LucideFileDown className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                                                             </button>
-                                                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                                                                <svg
-                                                                    className="w-4 h-4 text-muted-foreground hover:text-red-500"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                        strokeWidth={
-                                                                            2
-                                                                        }
-                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                                    />
-                                                                </svg>
+                                                            <button
+                                                                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                                                                onClick={() =>
+                                                                    deleteFile(
+                                                                        file.id
+                                                                    )
+                                                                }
+                                                                title="Delete file"
+                                                            >
+                                                                <LucideTrash2 className="w-4 h-4 text-muted-foreground hover:text-red-500" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -313,19 +379,7 @@ export default function UploadPage() {
                             {uploadedFiles.length === 0 && (
                                 <div className="text-center py-12">
                                     <div className="mx-auto w-24 h-24 mb-6 flex items-center justify-center rounded-full bg-muted/50">
-                                        <svg
-                                            className="w-12 h-12 text-muted-foreground"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={1.5}
-                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                            />
-                                        </svg>
+                                        <LucideFileText className="w-11 h-11 text-muted-foreground" />
                                     </div>
                                     <h3 className="text-lg font-medium text-muted-foreground mb-2">
                                         No documents uploaded yet

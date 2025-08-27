@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { HeroBgPattern } from "./svg";
+
 export default function Hero2() {
     return (
         <div className="bg-background">
             <main>
                 <div className="relative isolate">
-                    <svg
+                    {/* <svg
                         aria-hidden="true"
                         className="absolute inset-x-0 top-0 -z-10 h-[64rem] w-full stroke-border [mask-image:radial-gradient(32rem_32rem_at_center,white,transparent)]"
                     >
@@ -37,7 +40,8 @@ export default function Hero2() {
                             height="100%"
                             strokeWidth={0}
                         />
-                    </svg>
+                    </svg> */}
+                    <HeroBgPattern />
                     <div
                         aria-hidden="true"
                         className="absolute top-0 right-0 left-1/2 -z-10 -ml-24 transform-gpu overflow-hidden blur-3xl lg:ml-24 xl:ml-48"
@@ -65,12 +69,12 @@ export default function Hero2() {
                                         the fine print.
                                     </p>
                                     <div className="mt-10 flex items-center justify-center gap-x-6">
-                                        <a
-                                            href="#"
+                                        <Link
+                                            href="/dashboard"
                                             className="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                         >
                                             Upload Contract
-                                        </a>
+                                        </Link>
                                         <a
                                             href="#"
                                             className="text-sm/6 font-semibold text-foreground"
