@@ -4,6 +4,10 @@ import {
     StorageSharedKeyCredential,
 } from "@azure/storage-blob";
 import { v4 as uuidv4 } from "uuid";
+import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { getEmbedding } from "@/lib/embed";
+import { Pool } from "pg";
 
 const accountName = process.env.AZURE_STORAGE_ACCOUNT!;
 const accountKey = process.env.AZURE_STORAGE_KEY!;
@@ -17,6 +21,10 @@ const blobServiceClient = new BlobServiceClient(
     `https://${accountName}.blob.core.windows.net`,
     sharedKeyCredential
 );
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+});
 
 export async function POST(request: NextRequest) {
     try {
@@ -33,7 +41,8 @@ export async function POST(request: NextRequest) {
         // Validate file type
         const allowedTypes = [
             "application/pdf",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
         ];
 
         if (!allowedTypes.includes(file.type)) {
@@ -51,6 +60,42 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        console.log("got here 1");
+
+        const loader = new WebPDFLoader(file, { splitPages: false });
+        const docs = await loader.load();
+
+        const splitter = new RecursiveCharacterTextSplitter({
+            chunkSize: 500,
+            chunkOverlap: 60,
+        });
+
+        const sdocs = await splitter.createDocuments([docs[0].pageContent]);
+
+        const embeddings = await Promise.all(
+            sdocs.map(async (doc) => await getEmbedding(doc.pageContent))
+        );
+        console.log("got here 2");
+
+        await Promise.all(
+            sdocs.map(async (doc, i) => {
+                // pgvector expects an array, not a string
+                const embedding = embeddings[i];
+
+                const query = `
+                INSERT INTO "Embedding" ("text", "embedding", "metadata", "createdAt")
+                VALUES ($1, $2::vector, $3::jsonb, now())
+            `;
+                await pool.query(query, [
+                    doc.pageContent,
+                    JSON.stringify(embedding),
+                    JSON.stringify(doc.metadata || {}),
+                ]);
+            })
+        );
+
+        console.log("got here 3");
 
         const buffer = Buffer.from(await file.arrayBuffer());
 

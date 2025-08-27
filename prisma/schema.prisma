@@ -19,12 +19,11 @@ model User {
 
     contracts Contract[]
 
-    clauses Clause[]
-
     createdAt DateTime  @default(now())
     updatedAt DateTime  @updatedAt
     Risks     Risk[]
     Messages  Message[]
+    // Embedding Embedding[]
 }
 
 model Account {
@@ -74,45 +73,32 @@ model Contract {
     extractedAt DateTime?
     status      String    @default("pending")
 
-    userId     String
-    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    clauses    Clause[]
-    risks      Risk[]
-    messages   Message[]
-    embeddings Embedding[]
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    risks    Risk[]
+    messages Message[]
+    // embeddings Embedding[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model Embedding {
-    id         String   @id @default(uuid())
-    contractId String
-    contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+    id String @id @default(dbgenerated("gen_random_uuid()"))
+    // contractId String
+    // contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+    // userId     String
+    // user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    chunkText String
+    text String
+
     embedding Unsupported("vector")
-    index     Int
-    createdAt DateTime              @default(now())
-
-    @@index([contractId])
-}
-
-model Clause {
-    id         String   @id @default(uuid())
-    userId     String
-    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    contractId String
-    contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
-    heading    String
-    clauseText String
-    pageStart  Int
-    pageEnd    Int
-    type       String
-
-    risks Risk[]
+    metadata  Json?
 
     createdAt DateTime @default(now())
+
+    // @@index([contractId])
 }
 
 model Risk {
@@ -125,8 +111,6 @@ model Risk {
     severity      String
     deadline      DateTime
     clauseRefPage Int
-    clauseId      String
-    clause        Clause   @relation(fields: [clauseId], references: [id], onDelete: Cascade)
     confidence    Int
     createdAt     DateTime @default(now())
 }
