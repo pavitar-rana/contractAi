@@ -3,18 +3,19 @@
 ---
 
 ## 🎯 **Overview**
-**Description:** An open-source project built with modern tooling to help developers get started quickly.
+**Description:** An open-source project built with modern tooling to help developers get started quickly, focusing on AI-powered contract analysis and processing.
 
 ---
 
 ## ✨ **Features**
-*   **AI-Powered Document Processing:** Utilizes `langchain` and `@xenova/transformers` for intelligent contract analysis and understanding.
-*   **PDF Parsing:** Extracts content from PDF documents using `pdf-parse` for further processing.
-*   **User Authentication:** Secure user management with `next-auth`.
-*   **Modern User Interface:** Built with Next.js, Tailwind CSS, Headless UI, and Radix UI for a responsive and intuitive experience.
-*   **Database Integration:** Seamless data management with Prisma ORM and PostgreSQL.
-*   **Cloud Storage:** Integration with Azure Storage Blob for efficient document storage.
-*   **Developer-Friendly:** Designed for quick setup and development with a robust modern tech stack.
+*   **AI-Powered Contract Analysis:** Leverage `langchain` and `@xenova/transformers` for intelligent document processing.
+*   **PDF Parsing:** Extract and process information from PDF documents using `pdf-parse`.
+*   **Azure Blob Storage Integration:** Store and manage documents securely with `@azure/storage-blob`.
+*   **Modern Web UI:** Built with `Next.js`, `React`, `Tailwind CSS`, and `Radix UI` for a responsive and intuitive user experience.
+*   **Authentication & Authorization:** Secure application with `next-auth` and `prisma` for database management.
+*   **Database Integration:** Utilize `Prisma` with `PostgreSQL` (`pg`) for robust data persistence.
+*   **Theming:** Dynamic theme switching with `next-themes`.
+*   **Animations:** Enhanced user interface with `framer-motion` and `tw-animate-css`.
 
 ---
 
@@ -38,11 +39,15 @@ npm run lint   # eslint
 ---
 
 ## 🔥 **Tech Stack**
--   **Framework:** `@headlessui/react`, `@heroicons/react`, `@radix-ui/react-avatar`, `@radix-ui/react-separator`, `@radix-ui/react-slot`, `lucide-react`, `next`, `next-auth`, `next-themes`, `react`, `react-dom`, `@types/react`, `@types/react-dom`, `eslint-config-next`
--   **UI:** `tailwind-merge`, `@tailwindcss/postcss`, `tailwindcss`
--   **BuildTools:** `@eslint/eslintrc`, `eslint`
--   **Testing:** `@langchain/community`, `@langchain/core`, `langchain`
--   **Others:** `@auth/prisma-adapter`, `@azure/storage-blob`, `@prisma/client`, `@xenova/transformers`, `class-variance-authority`, `clsx`, `framer-motion`, `lru-cache`, `pdf-parse`, `pg`, `radix-ui`, `uuid`, `@types/node`, `@types/pg`, `prisma`, `tw-animate-css`, `typescript`
+-   **Framework:** `next`, `react`, `react-dom`
+-   **UI:** `@headlessui/react`, `@heroicons/react`, `@radix-ui/react-avatar`, `@radix-ui/react-separator`, `@radix-ui/react-slot`, `lucide-react`, `tailwind-merge`, `@tailwindcss/postcss`, `tailwindcss`, `class-variance-authority`, `clsx`, `radix-ui`, `tw-animate-css`, `framer-motion`
+-   **Authentication:** `next-auth`, `@auth/prisma-adapter`
+-   **AI/ML:** `@langchain/community`, `@langchain/core`, `langchain`, `@xenova/transformers`
+-   **Data Persistence:** `@prisma/client`, `prisma`, `pg`
+-   **Storage:** `@azure/storage-blob`
+-   **Document Processing:** `pdf-parse`
+-   **Utilities:** `next-themes`, `uuid`, `lru-cache`
+-   **Development Tools:** `@types/react`, `@types/react-dom`, `@types/node`, `@types/pg`, `eslint-config-next`, `@eslint/eslintrc`, `eslint`, `typescript`
 
 ---
 
@@ -56,36 +61,5 @@ npm start
 Example usage in code:
 
 ```js
-// Example usage (this will vary based on the specific API/components exposed)
-import { processContract } from "contractAi/lib/api"; // Hypothetical example
-
-async function analyzeDocument(filePath) {
-  const result = await processContract(filePath);
-  console.log("Analysis Result:", result);
-}
-
-// You might interact with the UI or specific API endpoints
-// after running the application.
-```
-
----
-
-## 🤝 **Contributing**
-1.  **Fork** the repo 🍴  
-2.  **Create** a new branch 🌱  
-3.  **Commit** your changes 💡  
-4.  **Push** to the branch 🚀  
-5.  **Open** a Pull Request 🎯  
-
-👉 See issues here: https://github.com/pavitar-rana/contractAi/issues
-
----
-
-## 📜 **License**
-**MIT**
-
----
-
-## 🔗 **Links**
--   🌐 **GitHub:** https://github.com/pavitar-rana/contractAi
--   🏠 **Homepage:** Not provided
+// Example of importing a component or utility from contractAi
+import { Button } from "@/components/ui/
