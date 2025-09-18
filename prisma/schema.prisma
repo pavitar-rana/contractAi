@@ -19,11 +19,11 @@ model User {
 
     contracts Contract[]
 
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
     Risks     Risk[]
     Messages  Message[]
-    // Embedding Embedding[]
+    Embedding Embedding[]
 }
 
 model Account {
@@ -66,30 +66,31 @@ model VerificationToken {
 }
 
 model Contract {
-    id          String    @id @default(uuid())
-    title       String
-    filePath    String
-    rawText     String
-    extractedAt DateTime?
-    status      String    @default("pending")
+    id       String @id @default(uuid())
+    title    String
+    blobName String
+    status   String @default("pending")
+    fileName String
+    fileSize Int
+    fileType String
 
     userId String
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    risks    Risk[]
-    messages Message[]
-    // embeddings Embedding[]
+    risks      Risk[]
+    messages   Message[]
+    embeddings Embedding[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model Embedding {
-    id String @id @default(dbgenerated("gen_random_uuid()"))
-    // contractId String
-    // contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
-    // userId     String
-    // user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id         String   @id @default(dbgenerated("gen_random_uuid()"))
+    contractId String
+    contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+    userId     String
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     text String
 
@@ -98,7 +99,7 @@ model Embedding {
 
     createdAt DateTime @default(now())
 
-    // @@index([contractId])
+    @@index([contractId])
 }
 
 model Risk {
